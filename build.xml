@@ -1,0 +1,30 @@
+<project name="Sibelius" default="debug">
+
+    <property file="build.properties"/>
+	
+    <target name="clean" description="Removes previous build">
+        <delete>
+            <fileset dir="${user.home}/Library/Application Support/Sibelius Software/Sibelius 6/Plugins" />
+            <fileset dir="${user.home}/Library/Application Support/Sibelius Software/Sibelius 6/Manuscript Paper" />
+        </delete>
+    </target>
+	
+	<target name="copy" depends="clean"
+	    description="Copies all files to the Sibelius application support directory">
+        
+		<copy todir="${user.home}/Library/Application Support/Sibelius Software/Sibelius 6/Plugins">
+            <fileset dir="src"/>
+        </copy>
+        
+		<copy todir="${user.home}/Library/Application Support/Sibelius Software/Sibelius 6/Manuscript Paper">
+            <fileset dir="templates"/>
+        </copy>
+	</target>
+	
+	<target name="debug" depends="clean,copy">
+	    <exec executable="open">
+	    	<arg value="/Applications/Sibelius 6.app"/>
+	    </exec>
+	</target>
+			
+</project>

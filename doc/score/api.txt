@@ -1,0 +1,39 @@
+
+Normalized score: Events well-ordered, no nesting
+
+Score -> Player                         => Actions # TODO
+Score -> Writer -> Strategy             => Notation
+Score -> PartWriter -> Strategy         => Notation
+
+PitchNotator -> TimeNotator 
+-> TypeNotator -> Measurer 
+-> Instrumentor -> Storage              => Strategy
+
+
+Score -> TypeNotator                    => [TypeDescriptor] # TODO
+Score -> PitchNotator                   => [PitchDescriptor]
+Score -> TimeNotator                    => [TimeDescriptor]
+
+Score -> Measurer                       => [TimeDescriptor]
+Score -> Measurer                       => Duration
+Score -> Measurer                       => NumberOfBars
+Score -> Measurer -> Location           => BarNumber
+Score -> Measurer -> BarNumber          => Location
+
+Score -> Instrumentator                 => [PartDescriptor]
+Score -> Instrumentator                 => 
+
+
+MusicExpression -> Iterator => MusicStream
+MusicStream -> Translator => Notation
+
+
+
+In the test implementation:
+ScoreWriter
+
+ScoreTypeNotator
+ScorePitchNotator
+ScoreTimeNotator
+ScoreMeasurer
+ScoreInstrumentator

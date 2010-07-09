@@ -1,0 +1,11 @@
+
+Documentation needed
+
+This is library code without documentation. Some kind reference and a tutorial
+is needed.
+
+I do not have time to write that at the moment. However, all code is clearly
+documented in "javadoc style". It should be quite easy to create some
+external reference docs from these.
+
+Hans Höglund <hans@hanshoglund.se>

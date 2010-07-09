@@ -1,0 +1,131 @@
+
++ Simple, lightweight API for Sibelius 6. +
+
+This plugin allow you to call ManuScript methods using text files. Any target
+environment can implement the file protocol to take control of Sibelius. The
+text files (called sockets) are stored in the file system.
+
+To initiate socket communication, call one of the methods ``synchronize()``,
+``send()`` or ``receive()`` from ManuScript. The ``synchronize()`` method, may
+also be added to the Plugins menu.
+
+The API plugin can be configured by editing the properties defined in its
+``Initialize`` method.
+
+
+++ Directory layout ++
+
+All sockets are contained in a single directory (see below). The socket
+directory contain a bind file, which instructs Sibelius to accept incoming
+messages on given socket addresses.
+
+Each connection have an address path that indicates a subdirectory structure
+in the socket directory. Each connection consist of two files, called send and
+receive.
+
+The full directory layout looks like this
+```
+<socketDirectory>/bind
+<socketDirectory>/sync 
+<socketDirectory>/startup
+<socketDirectory>/<address1>_send 
+<socketDirectory>/<address1>_receive
+<socketDirectory>/<address2>_send 
+<socketDirectory>/<address2>_receive etc...
+```
+
++++ bind +++
+
+This file contains one line for each incoming socket connection. Each line
+contains a socket address.
+
+Sibelius will scan this file for incoming messages whenever the synchronize
+method is called. If the last modification date of this file is earlier than
+the startup time of Sibelius minus the expires attribute, no messages are read
+and the synchronize method returns directly.
+
+When Sibelius has read and executed messages from all sockets specified in the
+bind file, it will overwrite it with a blank file.
+
+Example: Given the socket directory "~/.sibapi", the following contents of
+"~/.sibapi/bind" would cause Sibelius to read messages from the files listed
+below.
+```
+sib2otherLang/context_15/252
+dumperPlugin/dumps/mainDump
+testSocket
+```
+```
+~/.sibapi/sib2otherLang/context_15/252/receive
+~/.sibapi/dumperPlugin/dumps/mainDump/receive ~/.sibapi/testSocket/receive
+```
+
++++ synchronize +++
+
+When Sibelius has read and executed messages from all sockets specified in the
+bind file, it will modify the contents of this file. Thus target environments
+can determinate when Sibelius was last synchronized by checking the
+modification date of this file.
+
+The contents of this file is a checksum of the contents of bind when Sibelius
+was last synchronized.
+
+
++++ startup +++
+
+The contents of this file is overwritten whenever Sibelius starts, provided
+that this plugin has been installed on the system. Target environments can
+determinate when Sibelius was last started by checking the modification date
+of this file.
+
+The contents of this file is the time Sibelius was last started in XXX format.
+
+
++++ receive +++
+
+These files contains messages from targets to Sibelius. Messages are written
+in a Lisp-like syntax. Any Unicode character can be used. Line breaks and the
+following characters have special meanings. ( ) , \
+
+To include one of these characters literary, prefix it with '\'. Line break
+literals are written as '\n'.
+
+Each line contains one message expression, formatted as (name,recv,args ...)
+where name is a string representing a method name recv is a reference (see
+below) to the object that contains the method args is any number of arguments,
+which are strings, numbers or references
+
+The brackets are optional. Each parameter may contain nested bracketed
+expressions. Note that whitespace characters are not discarded, and that
+strings are written plainly rather than quoted. Thus the "Hello World"
+expression is written as (trace,self,Hello World!) and NOT as (trace, self,
+'Hello world!')
+
+
++++ send +++
+
+Whenever Sibelius has executed a message from a receive file, the return value
+of that message is written to the send file in the corresponding directory.
+The return value of this file is always written to its first line, the
+contents of remaining lines is always undefined. If a receive file contain
+multiple lines of messages, only the return value of thelast executed message
+will be written to the send file.
+
+If the return value contains any of the characters ( ) , or \, they will be
+escaped by \.
+
+If the returned value is an array, it will be formatted as (v0,v1,v2 ...)
+
+Nested arrays are formatted similarly as ((apple,banana),(red,yellow)) etc.
+
+If the returned value, or an array element of a returned array, is an object
+other than an array, it will be replaced by a string reference. Referenced
+objects are stored in an internal reference table.
+
+String references string on the form "sibobj_N", where N is the object at
+index N in the reference table.
+
+If a string on the form "sibobj_N", where N is any string representation of an
+integer, is provided as an argument in a receive file, that argument is
+replaced by the object at integer N in the reference table, or null if no such
+index exist.

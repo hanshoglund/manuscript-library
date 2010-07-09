@@ -1,0 +1,197 @@
+<?xml version="1.0"
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="generator" content="http://txt2tags.sf.net" />
+<link rel="stylesheet" type="text/css" href="styles.css" />
+</head>
+<body bgcolor="white" text="black">
+<div align="center">
+</div>
+
+<p></p>
+<hr class="light" />
+<p></p>
+  <ul>
+  <li><a href="#toc1">1. Simple, lightweight API for Sibelius 6.</a>
+    <ul>
+    <li><a href="#toc2">1.1. Directory layout</a>
+      <ul>
+      <li><a href="#toc3">1.1.1. bind</a>
+      </li>
+      <li><a href="#toc4">1.1.2. synchronize</a>
+      </li>
+      <li><a href="#toc5">1.1.3. startup</a>
+      </li>
+      <li><a href="#toc6">1.1.4. receive</a>
+      </li>
+      <li><a href="#toc7">1.1.5. send</a>
+      </li>
+      </ul>
+    </li>
+    </ul>
+  </li>
+  </ul>
+
+<p></p>
+<hr class="light" />
+<p></p>
+<a id="toc1" name="toc1"></a>
+<h1>1. Simple, lightweight API for Sibelius 6.</h1>
+<p>
+This plugin allow you to call ManuScript methods using text files. Any target
+environment can implement the file protocol to take control of Sibelius. The
+text files (called sockets) are stored in the file system.
+</p>
+<p>
+To initiate socket communication, call one of the methods <code>synchronize()</code>,
+<code>send()</code> or <code>receive()</code> from ManuScript. The <code>synchronize()</code> method, may
+also be added to the Plugins menu.
+</p>
+<p>
+The API plugin can be configured by editing the properties defined in its
+<code>Initialize</code> method.
+</p>
+<a id="toc2" name="toc2"></a>
+<h2>1.1. Directory layout</h2>
+<p>
+All sockets are contained in a single directory (see below). The socket
+directory contain a bind file, which instructs Sibelius to accept incoming
+messages on given socket addresses.
+</p>
+<p>
+Each connection have an address path that indicates a subdirectory structure
+in the socket directory. Each connection consist of two files, called send and
+receive.
+</p>
+<p>
+The full directory layout looks like this
+</p>
+<pre>
+  &lt;socketDirectory&gt;/bind
+  &lt;socketDirectory&gt;/sync 
+  &lt;socketDirectory&gt;/startup
+  &lt;socketDirectory&gt;/&lt;address1&gt;_send 
+  &lt;socketDirectory&gt;/&lt;address1&gt;_receive
+  &lt;socketDirectory&gt;/&lt;address2&gt;_send 
+  &lt;socketDirectory&gt;/&lt;address2&gt;_receive etc...
+</pre>
+<p></p>
+<a id="toc3" name="toc3"></a>
+<h3>1.1.1. bind</h3>
+<p>
+This file contains one line for each incoming socket connection. Each line
+contains a socket address.
+</p>
+<p>
+Sibelius will scan this file for incoming messages whenever the synchronize
+method is called. If the last modification date of this file is earlier than
+the startup time of Sibelius minus the expires attribute, no messages are read
+and the synchronize method returns directly.
+</p>
+<p>
+When Sibelius has read and executed messages from all sockets specified in the
+bind file, it will overwrite it with a blank file.
+</p>
+<p>
+Example: Given the socket directory "~/.sibapi", the following contents of
+"~/.sibapi/bind" would cause Sibelius to read messages from the files listed
+below.
+</p>
+<pre>
+  sib2otherLang/context_15/252
+  dumperPlugin/dumps/mainDump
+  testSocket
+</pre>
+<pre>
+  ~/.sibapi/sib2otherLang/context_15/252/receive
+  ~/.sibapi/dumperPlugin/dumps/mainDump/receive ~/.sibapi/testSocket/receive
+</pre>
+<p></p>
+<a id="toc4" name="toc4"></a>
+<h3>1.1.2. synchronize</h3>
+<p>
+When Sibelius has read and executed messages from all sockets specified in the
+bind file, it will modify the contents of this file. Thus target environments
+can determinate when Sibelius was last synchronized by checking the
+modification date of this file.
+</p>
+<p>
+The contents of this file is a checksum of the contents of bind when Sibelius
+was last synchronized.
+</p>
+<a id="toc5" name="toc5"></a>
+<h3>1.1.3. startup</h3>
+<p>
+The contents of this file is overwritten whenever Sibelius starts, provided
+that this plugin has been installed on the system. Target environments can
+determinate when Sibelius was last started by checking the modification date
+of this file.
+</p>
+<p>
+The contents of this file is the time Sibelius was last started in XXX format.
+</p>
+<a id="toc6" name="toc6"></a>
+<h3>1.1.4. receive</h3>
+<p>
+These files contains messages from targets to Sibelius. Messages are written
+in a Lisp-like syntax. Any Unicode character can be used. Line breaks and the
+following characters have special meanings. ( ) , \
+</p>
+<p>
+To include one of these characters literary, prefix it with '\'. Line break
+literals are written as '\n'.
+</p>
+<p>
+Each line contains one message expression, formatted as (name,recv,args ...)
+where name is a string representing a method name recv is a reference (see
+below) to the object that contains the method args is any number of arguments,
+which are strings, numbers or references
+</p>
+<p>
+The brackets are optional. Each parameter may contain nested bracketed
+expressions. Note that whitespace characters are not discarded, and that
+strings are written plainly rather than quoted. Thus the "Hello World"
+expression is written as (trace,self,Hello World!) and NOT as (trace, self,
+'Hello world!')
+</p>
+<a id="toc7" name="toc7"></a>
+<h3>1.1.5. send</h3>
+<p>
+Whenever Sibelius has executed a message from a receive file, the return value
+of that message is written to the send file in the corresponding directory.
+The return value of this file is always written to its first line, the
+contents of remaining lines is always undefined. If a receive file contain
+multiple lines of messages, only the return value of thelast executed message
+will be written to the send file.
+</p>
+<p>
+If the return value contains any of the characters ( ) , or \, they will be
+escaped by \.
+</p>
+<p>
+If the returned value is an array, it will be formatted as (v0,v1,v2 ...)
+</p>
+<p>
+Nested arrays are formatted similarly as ((apple,banana),(red,yellow)) etc.
+</p>
+<p>
+If the returned value, or an array element of a returned array, is an object
+other than an array, it will be replaced by a string reference. Referenced
+objects are stored in an internal reference table.
+</p>
+<p>
+String references string on the form "sibobj_N", where N is the object at
+index N in the reference table.
+</p>
+<p>
+If a string on the form "sibobj_N", where N is any string representation of an
+integer, is provided as an argument in a receive file, that argument is
+replaced by the object at integer N in the reference table, or null if no such
+index exist.
+</p>
+
+<!-- xhtml code generated by txt2tags 2.5 (http://txt2tags.sf.net) -->
+<!-- cmdline: txt2tags -v -i /Users/hans/Documents/Kod/java/workspaces/macbook/Sibelius API/doc/SibeliusAPI.t2t -t xhtml -\-style=styles.css -\-toc -->
+</body></html>

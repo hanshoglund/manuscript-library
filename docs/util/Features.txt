@@ -1,0 +1,23 @@
+
+- Array manipulation
+    Sorting, filtering, searching, map, reduce, peek
+- Comparision
+    Custom orderings, lexical ordering, numerical ordering
+- Data structures
+    Hash table (based on dictionary), Object-based tree stucture, 
+    TreeNode manipulation
+- Iterators (simplifying for statements)
+- Eval function
+- Callbacks and lambda expressions
+- Character and string manipulation
+    Filter functions, case conversion, digit to char conversion,
+    platform independent separators, N-radix numbers, escaping,
+    path utils, replace, pad, trim, reverse, mutable string builders
+- Hasher
+- Typed objects, affecting ordering and equality operations
+- Rational numbers
+- Unit testing
+- Low-level operation (faster bit ops than utils)
+- High-quality random numbers
+- Enums
+- File utils
